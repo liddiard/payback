@@ -14,17 +14,23 @@ except IndexError:
     sys.exit(1)
 
 def get_disparity(source, target):
-    recents_request = urllib2.urlopen('https://api.venmo.com/v1/payments?access_token='+ACCESS_TOKEN)
-    recents_response = recents_request.read()
-    recents = json.loads(recents_response)['data']
-
     payments_from_target = payments_to_target = 0
-    for entry in recents:
-        if entry['date_created'] > EVEN_AT and entry['action'] == 'pay':
-            if entry['actor']['id'] == target:
-                payments_from_target += entry['amount']
-            elif entry['actor']['id'] == source and entry['target']['user']['id'] == target:
-                payments_to_target += entry['amount']
+
+    def calculate_disparity(source, target, url='https://api.venmo.com/v1/payments'):
+        recents_request = urllib2.urlopen(url+'?access_token='+ACCESS_TOKEN)
+        recents_response = json.loads(recents_request.read())
+        recents = recents_response['data']
+        next_page = recents_response.get('pagination')
+
+        for entry in recents:
+            if entry['date_created'] > EVEN_AT and entry['action'] == 'pay':
+                if entry['actor']['id'] == target:
+                    payments_from_target += entry['amount']
+                elif entry['actor']['id'] == source and entry['target']['user']['id'] == target:
+                    payments_to_target += entry['amount']
+        if entry[-1]['date_created'] > EVEN_AT and next_page is not None:
+            # if we were even at a point before this page, we need to go back further
+            calculate_disparity(source, target, url=next_page)
     return payments_from_target - payments_to_target
 
 def pay(target, amount):
