@@ -37,7 +37,7 @@ def pay(target, amount):
     data = urlencode({
         'access_token': ACCESS_TOKEN,
         'user_id': target,
-        'note': 'Your payment was automatically refunded to you with Payback(tm), an application developed by Harrison Liddiard, at %s.' % time.strftime('%c'),
+        'note': 'Your payment was automatically refunded to you with Payback(tm) at %s.' % time.strftime('%c'),
         'amount': amount
     })
     try:
